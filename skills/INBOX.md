@@ -2,30 +2,23 @@
 
 **Purpose:** This inbox is the intake for new lessons, incidents, and process notes before they are promoted into the numbered skills files.
 
-**Confidence note:** Verified against the repo scaffold on 2026-11-17. The current project contains only empty application repositories and placeholder specs, so this inbox is intentionally a starting list of risks and expectations rather than operational history.
+**Confidence note:** Verified against the workspace on 2026-11-20. Resolved bootstrap notes from 2026-11-17 were triaged and removed.
 
 ## Current intake
 
 ### Empty application repos are not implementation
 
-- **Type / Author / Date:** Risk note / repo bootstrap / 2026-11-17
-- **What:** The [eclipse-api](../eclipse-api), [eclipse-web](../eclipse-web), and [eclipse-android](../eclipse-android) repositories exist but contain no application source files or tracked commits.
-- **Why:** Without a verified implementation, engineers can easily assume the project is further along than it is, which creates false confidence and stale architecture assumptions.
-- **Evidence:** Directory listings and Git status from the repos; each one is a Git repo with no commits and no app code.
-
-### Project detail placeholders need real product facts
-
-- **Type / Author / Date:** Design note / repo spec / 2026-11-17
-- **What:** The business logic template still contains placeholders such as `<Platform>`, `<App/Software Type>`, and `<Team Name>`.
-- **Why:** Product-level assumptions affect security, auth, user roles, and release plans; placeholders leave the system architecture under-specified.
-- **Evidence:** [eclipse-specs/business-logic-v1.0.md](../business-logic-v1.0.md)
+- **Type / Author / Date:** Risk note / repo bootstrap / 2026-11-17 (reverified 2026-11-20)
+- **What:** [eclipse-api](../../eclipse-api), [eclipse-web](../../eclipse-web), and [eclipse-android](../../eclipse-android) contain only `AGENTS.md` and no committed runtime code yet, even though `eclipse-specs` now contains approved Business Logic v1.1 and `db-schema/v1.0.0.sql`.
+- **Why:** Without verified runtime code, engineers must treat `skills/` and `README.md` as spec-level guidance until migrations, Edge Functions, and PWA code land.
+- **Evidence:** Workspace directory listing on 2026-11-20.
 
 ### The skills set must stay grounded in code, not intent
 
-- **Type / Author / Date:** Methodology / engineering practice / 2026-11-17
-- **What:** This folder captures the expected operating model for the ecosystem, but it is explicitly marked as scaffold-level guidance until code lands.
+- **Type / Author / Date:** Methodology / engineering practice / 2026-11-17 (reverified 2026-11-20)
+- **What:** Once implementation starts in `eclipse-api` and `eclipse-web`, refresh `03_CODE_STYLE`, `04_CHANGE_RULES`, `05_DEBUGGING_PLAYBOOK`, `09_SECURITY`, `10_DEPLOYMENT`, `11_TESTING`, and `14_DEVELOPER_WORKFLOWS` against actual code, scripts, and configs.
 - **Why:** The code wins. Any rule not matched by real implementation should be treated as a proposal rather than a fact.
-- **Evidence:** This repository snapshot, the handoff instructions, and the policy in [handoff.md](../../handoff.md)
+- **Evidence:** Policy in [handoff.md](../../handoff.md).
 
 ## Contribution template
 

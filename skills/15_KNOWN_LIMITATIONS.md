@@ -1,26 +1,20 @@
 # 15 — Known Limitations
 
-**Purpose:** This document captures the gaps that are likely to surprise a new contributor or reviewer. It is sorted by impact and likelihood so the team knows what deserves attention first.
+**Purpose:** This document captures current gaps, deferred capabilities, and architectural constraints likely to surprise a contributor or reviewer.
 
-**Confidence note:** Verified against the repo scaffold on 2026-11-17. This is a limitation register grounded in the actual workspace state: there is no visible app implementation, no deployment configuration, and no data model yet.
+**Confidence note:** Verified against the workspace on 2026-11-20.
 
 ## Ranked limitations
 
-1. No application code is currently checked in to the API, web, or Android repos.
-2. No runtime configuration, build steps, or deployment manifests are present.
-3. Product requirements remain placeholders instead of verified business rules.
-4. No real database schema or migration history is available.
-5. No auth, security policy, or credential handling has been implemented or reviewed.
-6. No actual test suite or smoke coverage has been created yet.
-7. No production incident history or operational telemetry is available to validate assumptions.
+1. **No application code committed yet:** `eclipse-api`, `eclipse-web`, and `eclipse-android` currently contain only `AGENTS.md`. Migrations, Edge Functions, React PWA source, and tests are not yet implemented.
+2. **Offline sync is deferred, though the schema prepares for it:** `v1.0.0.sql` uses offline-first UUID/soft-delete conventions (`db-design-choices.md`), but the MVP web app is online-first with PWA app-shell caching only. Offline drafts and upload queues are a later phase.
+3. **No DB-level `ON DELETE CASCADE` on domain tables:** By design (`db-design-choices.md`), domain tables omit `REFERENCES`. Edge Functions (`delete-attachment`, `delete-entry`, `delete-account`) must explicitly delete child rows, and reads must tolerate missing optional parents.
+4. **Images only for MVP evidence:** `v1.0.0.sql` and `evidence` Storage bucket restrict uploads to `image/jpeg`, `image/png`, and `image/webp` (5 MB max). PDFs and other document types are not supported in the MVP.
+5. **Single-user scope only in MVP:** Supervisor, Faculty Reviewer, and Admin portals (from historical `v1.0`) and the Manuscript section builder are deferred to post-MVP.
+6. **Unfinalized operational/legal choices:** Hosting provider, production SMTP, OpenAI model/budget, Google OAuth project ownership, and final software license remain TBD (tracked in `README.md` §18).
 
-## Redesign candidates
+## Redesign / future-phase candidates
 
-- Convert the current placeholder repo into a rigorously defined product architecture once the actual app code lands.
-- Replace generic spec templates with real user stories and acceptance criteria.
-- Add environment and deployment policy documents once app repos contain actual build output.
-- Establish a real data model and migration strategy before feature work grows.
-
-## Risk statement
-
-The project currently has the shape of a multi-repo system but not the implementation evidence to support the expected operation. Treat the current documents as scaffolding for discipline until they are replaced by reality.
+- Implement `eclipse-api` migrations (from `v1.0.0.sql`), Edge Functions, and pgTAP tests first, then generate `database.types.ts` for `eclipse-web`.
+- Add later-phase manuscript tables (`manuscript_sections`, `manuscript_section_entries`, `work_entries.approved_for_manuscript`) via forward migrations (`v1.0.1+`).
+- Add a periodic Storage orphan-reconciliation job if partial failures occur during uploads or deletions.

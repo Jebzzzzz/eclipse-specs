@@ -1,57 +1,55 @@
 # 02 — Project Structure
 
-**Purpose:** This document defines where code should live in the Eclipse ecosystem and what belongs in each repository. It is the map for new code and the rulebook for what must not be added to the wrong layer.
+**Purpose:** This document defines where code and specifications live in the Eclipse ecosystem and what belongs in each repository.
 
-**Confidence note:** Verified against the current repo scaffold on 2026-11-17. The actual app code is not present, so this is a structural baseline rather than a verified implementation tree.
+**Confidence note:** Verified against the workspace on 2026-11-20. Specification files and `db-schema/v1.0.0.sql` exist; `eclipse-api`, `eclipse-web`, and `eclipse-android` currently contain only `AGENTS.md`.
 
-## Intended repository layout
+## Repository layout
 
 ```text
- eclipse-ecosystem/
- ├─ AGENTS.md
- ├─ handoff.md
- ├─ eclipse-api/
- │  ├─ AGENTS.md
- │  └─ ... backend source, migrations, tests, config
- ├─ eclipse-web/
- │  ├─ AGENTS.md
- │  └─ ... browser app source, config, tests
- ├─ eclipse-android/
- │  ├─ AGENTS.md
- │  └─ ... Android app source, config, tests
- ├─ eclipse-specs/
- │  ├─ AGENTS.md (if added later)
- │  ├─ business-logic-v1.0.md
- │  ├─ git-guidelines.md
- │  ├─ sense-making.md
- │  └─ skills/
- │     ├─ 00_INDEX.md
- │     ├─ INBOX.md
- │     └─ ... numbered skills docs
- └─ ...
+eclipse-ecosystem/
+├─ AGENTS.md                           # Ecosystem-wide agent instructions
+├─ README.md                           # Ecosystem specification & developer guide
+├─ handoff.md                          # Skills generation & maintenance guide
+├─ eclipse-specs/                      # Source of truth (docs & schema baseline only)
+│  ├─ AGENTS.md
+│  ├─ business-logic-v1.0.md           # Historical baseline (superseded for MVP)
+│  ├─ business-logic-v1.1-proposed.md  # Approved MVP baseline (filename retained)
+│  ├─ db-design-choices.md             # Offline-first DB conventions
+│  ├─ db-schema/
+│  │  └─ v1.0.0.sql                    # Authoritative idempotent MVP SQL baseline
+│  ├─ git-guidelines.md                # Eclipse (ECL) commit & release-tag rules
+│  ├─ sense-making.md                  # Environmental scanning instructions
+│  ├─ planning/
+│  │  └─ sense-making.csv
+│  └─ skills/
+│     ├─ 00_INDEX.md
+│     ├─ INBOX.md
+│     └─ 01..16_*.md
+├─ eclipse-api/                        # Supabase project (migrations, RLS, Edge Functions)
+│  └─ AGENTS.md                        # (scaffold; code pending)
+├─ eclipse-web/                        # React + Vite PWA
+│  └─ AGENTS.md                        # (scaffold; code pending)
+└─ eclipse-android/                    # Reserved for future native Android (out of scope for MVP)
+   └─ AGENTS.md
 ```
 
 ## Where new code goes
 
-- Add backend code in [eclipse-api](../eclipse-api).
-- Add browser UI logic in [eclipse-web](../eclipse-web).
-- Add Android code in [eclipse-android](../eclipse-android).
-- Add product, contract, security, and business documentation in [eclipse-specs](../).
+- Add SQL migrations, RLS/Storage policies, pgTAP tests, and Supabase Edge Functions (`enhance-description`, `delete-attachment`, `delete-entry`, `delete-account`) in [eclipse-api](../../eclipse-api).
+- Add React + Vite PWA pages, feature modules, Supabase service wrappers, and browser DOCX export in [eclipse-web](../../eclipse-web).
+- Add product requirements, schema baselines (`db-schema/v1.0.x.sql`), contracts, and skills updates in [eclipse-specs](../).
+- Do **not** add code to [eclipse-android](../../eclipse-android) until native Android scope is formally approved.
 
 ## Must not go here
 
-- Do not place web-only UI code in the API repo.
-- Do not place API business rules in the Android or web clients.
-- Do not write app logic into the spec files unless it is explicitly a decision record or a contract note.
-- Do not add hidden cross-repo dependencies that bypass the API contract.
+- Do not place application code or secrets in `eclipse-specs`.
+- Do not place OpenAI keys, Supabase service-role keys, or authoritative authorization checks in `eclipse-web`.
+- Do not scatter raw Supabase queries across presentational UI components; keep them in `eclipse-web/src/services/`.
 
 ## Naming conventions that matter
 
-- Prefer domain names with clear product meaning over generic names such as `core`, `util`, or `shared` unless the code truly spans all clients.
-- Keep repository-specific code names aligned with product features and user flows.
-- Use feature-based folders and files that can be traced back to the requirement or decision record.
-- Preserve a one-to-one relationship between a document, a contract, and a runtime implementation so an engineer can find the source of truth quickly.
-
-## Current repo state
-
-The tree above is the intended state. The currently visible working tree contains only placeholder specs and empty component repos, so no implementation-specific path names are yet proven. When real code appears, this document should be updated to reflect the actual package and folder boundaries.
+- PostgreSQL tables and columns: lowercase `snake_case`, plural table names, `*_uuid` for cross-table references.
+- Edge Function folders: `kebab-case` (`enhance-description`, `delete-attachment`, `delete-entry`, `delete-account`).
+- React components: `PascalCase`; hooks/utilities/variables: `camelCase`.
+- Schema files in `eclipse-specs/db-schema/`: `v1.0.0.sql` baseline, patch bumps (`v1.0.1.sql`) for forward migrations, minor bumps (`v1.1.0.sql`) for full snapshots.

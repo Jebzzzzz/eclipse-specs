@@ -1,65 +1,55 @@
 # 08 — API
 
-**Purpose:** This document defines the API conventions and safety rules for the Eclipse service layer. It explains how to add new endpoints, version them, validate input, and keep the contract consistent across the web and Android clients.
+**Purpose:** This document defines the backend API surface and conventions for Eclipse / OJT Chronicle (`eclipse-api`), covering Supabase PostgREST CRUD and Supabase Edge Functions.
 
-**Confidence note:** Verified against the current repo scaffold on 2026-11-17. No API implementation is present, so this is a baseline contract model for future implementation rather than a verified route inventory.
+**Confidence note:** Verified against `README.md` and `eclipse-specs/db-schema/v1.0.0.sql` on 2026-11-20. Edge Functions are not yet implemented in `eclipse-api`.
 
-## Response envelope
+## Backend Architecture (No Custom REST Server)
 
-Use a consistent response shape for every API response, for example:
+- **Ordinary CRUD:** Handled via Supabase's generated PostgREST API through typed service modules in `eclipse-web/src/services/`, secured by PostgreSQL RLS.
+- **Privileged operations:** Handled via Supabase Edge Functions (Deno/TypeScript) in `eclipse-api/supabase/functions/` with `verify_jwt = true`.
+
+## Edge Function Inventory (MVP)
+
+| Function              | Auth        | Responsibility                                                                                       |
+| --------------------- | ----------- | ---------------------------------------------------------------------------------------------------- |
+| `enhance-description` | User JWT    | Verifies ownership, `profiles.ai_consent_at`, input length, style, and daily rate limit (`ai_usage` vs. `app_settings.ai.requests_per_day`); reads `work_entries.description` server-side; enforces idempotency via `request_id`; creates `ai` revision (`service_role`); calls OpenAI; logs `ai_usage`. |
+| `delete-attachment`   | User JWT    | Verifies ownership of `entry_attachments` row; deletes the Storage object from `evidence` bucket; removes (or archives) the metadata row via `service_role`. |
+| `delete-entry`        | User JWT    | Verifies ownership of `work_entries` row; deletes all Storage objects for the entry from `evidence`; explicitly deletes `entry_attachments`, `entry_revisions`, and `work_entries` rows (no DB cascades exist on domain tables). |
+| `delete-account`      | User JWT    | Verifies caller; removes all Storage objects under `{user_uuid}/` in `evidence`; explicitly deletes user rows from `ai_usage`, `entry_revisions`, `entry_attachments`, `work_entries`, `entry_categories`, and `ojt_profiles`; deletes the `auth.users` account (cascading to `profiles`). |
+
+## Edge Function Response Convention
+
+Return consistent JSON payloads and standard HTTP status codes (`200`, `400`, `401`, `403`, `404`, `429`, `500`):
 
 ```json
 {
-  "success": true,
   "data": {},
-  "error": null,
-  "meta": {
-    "requestId": "...",
-    "timestamp": "..."
+  "error": null
+}
+```
+
+On failure, return a non-sensitive machine-readable `code` and user-safe `message` (never stack traces, SQL errors, or secrets):
+
+```json
+{
+  "data": null,
+  "error": {
+    "code": "AI_RATE_LIMITED",
+    "message": "Daily AI enhancement limit reached."
   }
 }
 ```
 
-- `success` indicates whether the request completed without an application-level failure.
-- `data` holds the requested payload or resource state.
-- `error` contains a machine-readable error code and a safe message.
-- `meta` provides operational context such as run id and request timestamp.
+## Validation & Security Rules
 
-## Route inventory
+- Always derive the caller's identity from the verified JWT (`auth.getUser()`), never from a client-supplied `user_uuid`.
+- Revalidate all inputs server-side (UUID format, enum values, text length, ownership).
+- For `enhance-description`, always read the source text from `work_entries.description` in PostgreSQL rather than trusting text posted from the browser.
+- Use `service_role` only inside Edge Functions after verifying caller identity and ownership.
 
-At the current repo state, there is no verified route inventory. The expected pattern is:
+## Common Mistakes
 
-- `/auth/*` for identity and session operations
-- `/users/*` for profile and account management
-- `/<domain>/*` for feature-specific resources
-- `/health` or equivalent for service health checks
-
-## How to add an endpoint
-
-1. Confirm the product requirement in the specs.
-2. Add the route contract and validation rules in the API repo.
-3. Update the web and Android clients that use it.
-4. Document the auth and permission requirements.
-5. Add a failing or smoke test before final merge.
-
-## Validation rules
-
-- Validate every input on the server, even if the client already checks it.
-- Reject empty, malformed, or unauthorized requests before touching persistence.
-- Return stable error codes so client apps can handle them consistently.
-- Keep business rules server-side and never in a client view model.
-
-## Versioning and compatibility
-
-- Prefer explicit versioning for routes or response contracts where the client surface is not fully controlled.
-- Keep backward compatibility in mind when changing fields or status values.
-- If a response shape changes, update the docs and the client at the same time.
-
-## Common mistakes
-
-- Accepting data that is only partially validated.
-- Treating UI validation as a security boundary.
-- Returning raw exceptions or stack traces to clients.
-- Mixing business workflow logic into route handlers without clear domain boundaries.
-
-This API baseline should be tightened to the real implementation once the backend repo contains route and handler code.
+- Assuming `DELETE FROM work_entries` or `auth.admin.deleteUser()` cascades to domain tables (it does not; domain tables omit `REFERENCES`).
+- Allowing clients to insert `source = 'ai'` rows directly into `entry_revisions` (blocked by RLS).
+- Skipping `request_id` idempotency checks in `enhance-description` (causes duplicate OpenAI billing on retries/double-clicks).
