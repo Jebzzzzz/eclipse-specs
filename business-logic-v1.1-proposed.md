@@ -1,6 +1,6 @@
-# Business Logic v1.1 Proposed
+# Business Logic v1.1
 
-> Status: Proposed MVP refinement
+> Status: Approved MVP baseline (supersedes v1.0 for initial release; filename retained for link stability)
 > Scope: Eclipse / OJT Chronicle
 > Platform: Responsive web app (PWA); native Android is out of scope for the initial release
 
@@ -82,23 +82,24 @@ The following feature set is the recommended MVP.
 
 ### 5.1 Authentication and profile setup
 
-- Google Sign-In
+- Google Sign-In and email/password authentication (with email verification and password reset)
 - student account creation and session management
-- basic profile fields such as name, school/program, and OJT details
+- basic profile fields such as name, school/program, timezone, and OJT placement details (company, department, supervisor, dates, required hours)
 
 ### 5.2 Daily activity and work-hour logging
 
 - create and edit daily OJT entries
-- record date, title, description, and hours worked
-- view entries in chronological order
-- delete or archive own entries
+- record date, title, description, category, and hours worked
+- view entries in chronological order and track rendered vs. required hours
+- archive or permanently delete own entries (permanent deletion via Edge Function so Storage files are removed cleanly)
 
 ### 5.3 Evidence uploads
 
-- upload screenshots and supporting files
-- attach files to a specific activity
+- upload screenshots as supporting evidence (MVP accepts images only: JPEG, PNG, WebP; non-image files are deferred)
+- attach images with optional figure captions to a specific activity
 - preview uploaded images
-- store files in a secure private bucket
+- store files in a secure private Supabase Storage bucket (`evidence`) after acknowledging the upload confidentiality notice
+- remove single attachments via Edge Function so Storage objects and metadata stay in sync
 
 ### 5.4 Original writing and revision history
 
@@ -116,7 +117,7 @@ The following feature set is the recommended MVP.
 
 ### 5.6 Export and submission readiness
 
-- generate a simple report-ready summary of activity records
+- generate a simple report-ready **DOCX** summary of activity records in the browser (profile, hours summary, chronological entries, and captioned figures)
 - prepare documentation for academic review or final submission
 - avoid automatic manuscript generation in the MVP
 

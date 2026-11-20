@@ -1,5 +1,7 @@
 # Business Logic
 
+> **Status:** Historical baseline (superseded for the MVP by [business-logic-v1.1-proposed.md](business-logic-v1.1-proposed.md), which is now the approved MVP baseline). Multi-role review, administration, and manuscript organization from this document are retained as post-MVP reference.
+
 > Development of a Web-Based OJT Documentation and Manuscript Preparation System using React and Supabase for On-the-Job Training Students
 
 - Allowed Platforms: Web
